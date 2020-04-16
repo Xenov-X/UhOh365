@@ -60,7 +60,11 @@ def thread_worker(args):
                         r = requests.get('https://outlook.office365.com/autodiscover/autodiscover.json/v1.0/{}@{}?Protocol=Autodiscoverv1'.format(junk_user, domain), headers=headers, verify=args.nossl, allow_redirects=False, proxies=proxies)
                         if r.status_code == 302 and 'outlook.com/autodiscover' in r.text:
                             domain_is_o365[domain] = True
+                        elif r.status_code == 302 and 'https://outlook.office365.com/autodiscover' in r.text:
+                            domain_is_o365[domain] = True
                         elif r.status_code == 200 and 'https://outlook.office.com/api' in r.text:
+                            domain_is_o365[domain] = True
+                        elif r.status_code == 200 and 'https://outlook.office365.com' in r.text:
                             domain_is_o365[domain] = True
                         else:
                             if args.verbose:
