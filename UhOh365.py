@@ -58,20 +58,22 @@ def thread_worker(args):
                     if domain not in domain_is_o365.keys():
                         junk_user = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(20))
                         r = requests.get('https://outlook.office365.com/autodiscover/autodiscover.json/v1.0/{}@{}?Protocol=Autodiscoverv1'.format(junk_user, domain), headers=headers, verify=args.nossl, allow_redirects=False, proxies=proxies)
-                        if 'outlook.office365.com' in r.text:
+                        if r.status_code == 302 and 'outlook.com/autodiscover' in r.text:
+                            domain_is_o365[domain] = True
+                        elif r.status_code == 200 and 'https://outlook.office.com/api' in r.text:
                             domain_is_o365[domain] = True
                         else:
                             if args.verbose:
                                 print("It doesn't look like '{}' uses o365".format(domain))
                             domain_is_o365[domain] = False
             r = requests.get('https://outlook.office365.com/autodiscover/autodiscover.json/v1.0/{}?Protocol=Autodiscoverv1'.format(email), headers=headers, verify=args.nossl, allow_redirects=False, proxies=proxies)
-            if r.status_code == 200 and "X-MailboxGuid" in r.headers.keys():
+            if r.status_code == 200:
                 print("VALID: ", email)
                 if args.output is not None:
                     print_queue.put(email)
             elif r.status_code == 302:
                 if domain_is_o365[domain] and 'outlook.office365.com' not in r.text:
-                    print("VALID: ", email)
+                    print("INVALID: ", email)
                     if args.output is not None:
                         print_queue.put(email)
             else:
